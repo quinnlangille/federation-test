@@ -1,13 +1,13 @@
-import { queryType, makeSchema, objectType, mutationType, nonNull, stringArg, arg, declarativeWrappingPlugin, list } from '@nexus/schema';
+import { queryType, makeSchema, objectType, mutationType, stringArg, declarativeWrappingPlugin, list, extendType } from '@nexus/schema';
 import { transformSchemaFederation } from 'graphql-transform-federation';
 import { nexusPrisma } from 'nexus-plugin-prisma';
 import { GraphQLSchema } from 'graphql';
 import path from 'path';
 
-const GroupProduct = objectType({
-    name: 'GroupProduct',
+const Product = objectType({
+    name: 'Product',
     definition(t) {
-        t.string('id')
+        t.nonNull.id('id')
     }
 })
 
@@ -17,7 +17,7 @@ const ProductGroup = objectType({
         t.string('id');
         t.string('name');
         t.list.field('products', {
-            type: 'GroupProduct',
+            type: 'Product',
         })
     }
 });
@@ -29,7 +29,6 @@ const Query = queryType({
             async resolve(_parent, _args, ctx) {
                 return ctx.prisma.productGroup.findMany({
                     include: { products: true },
-
                 });
             }
         });
@@ -74,7 +73,7 @@ const Mutation = mutationType({
 export async function buildNexusFederatedSchema(
 ): Promise<GraphQLSchema> {
     const schema = makeSchema({
-        types: [Query, ProductGroup, GroupProduct, Mutation],
+        types: [Query, ProductGroup, Product, Mutation],
         plugins: [<any>nexusPrisma({ experimentalCRUD: true }), declarativeWrappingPlugin()],
         outputs: {
             typegen: path.join(process.cwd(), 'generated', 'nexus-typegen.ts'),
@@ -99,14 +98,17 @@ export async function buildNexusFederatedSchema(
         Query: {
             extend: true,
         },
+        Product: {
+            keyFields: ['id'],
+            extend: true,
+            fields: {
+                id: {
+                    external: true,
+                },
+            },
+        },
         ProductGroup: {
             keyFields: ['id'],
-            fields: {
-                products: {
-                    external: true,
-                    provides: 'id'
-                }
-            },
         }
     });
 }
