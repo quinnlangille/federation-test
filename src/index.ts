@@ -1,8 +1,6 @@
 import { ApolloServer } from 'apollo-server';
-
-// we'll create these in a second!
-import { buildNexusFederatedSchema } from './schema';
 import { createContext } from './context';
+import { buildNexusFederatedSchema } from './schema';
 
 buildNexusFederatedSchema().then(schema => {
   const apolloServer = new ApolloServer({
@@ -13,5 +11,5 @@ buildNexusFederatedSchema().then(schema => {
   
   apolloServer.listen(80, () => {
       console.log('Listening on 80');
-  })
+  });
 });
